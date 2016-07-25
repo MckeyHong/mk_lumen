@@ -14,3 +14,8 @@
 $app->get('/', function () use ($app) {
     return $app->version();
 });
+
+
+$app->get('/users', function() {
+    return response()->json([\App\Model\Users::all()]);
+});
