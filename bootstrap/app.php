@@ -23,7 +23,10 @@ $app = new Laravel\Lumen\Application(
     realpath(__DIR__.'/../')
 );
 
+$app->configure('app');
+$app->configure('auth');
 $app->configure('api');
+$app->configure('oauth2');
 
 $app->withFacades();
 
@@ -61,13 +64,17 @@ $app->singleton(
 |
 */
 
-// $app->middleware([
-//    App\Http\Middleware\ExampleMiddleware::class
-// ]);
+$app->middleware([
+    \LucaDegasperi\OAuth2Server\Middleware\OAuthExceptionHandlerMiddleware::class
+]);
 
-// $app->routeMiddleware([
-//     'auth' => App\Http\Middleware\Authenticate::class,
-// ]);
+$app->routeMiddleware([
+    'check-authorization-params' => \LucaDegasperi\OAuth2Server\Middleware\CheckAuthCodeRequestMiddleware::class,
+    'csrf'                       => \Laravel\Lumen\Http\Middleware\VerifyCsrfToken::class,
+    'oauth'                      => \LucaDegasperi\OAuth2Server\Middleware\OAuthMiddleware::class,
+    'oauth-client'               => \LucaDegasperi\OAuth2Server\Middleware\OAuthClientOwnerMiddleware::class,
+    'oauth-user'                 => \LucaDegasperi\OAuth2Server\Middleware\OAuthUserOwnerMiddleware::class,
+]);
 
 /*
 |--------------------------------------------------------------------------
@@ -81,7 +88,9 @@ $app->singleton(
 */
 
 $app->register(Dingo\Api\Provider\LumenServiceProvider::class);
-
+$app->register(\LucaDegasperi\OAuth2Server\Storage\FluentStorageServiceProvider::class);
+$app->register(\LucaDegasperi\OAuth2Server\OAuth2ServerServiceProvider::class);
+$app->register(Arubacao\BasicAuth\BasicGuardServiceProvider::class);
 
 /*
 |--------------------------------------------------------------------------
@@ -96,6 +105,23 @@ $app->register(Dingo\Api\Provider\LumenServiceProvider::class);
 
 $app->group(['namespace' => 'App\Http\Controllers'], function ($app) {
     require __DIR__.'/../app/Http/routes.php';
+});
+
+
+
+app('Dingo\Api\Auth\Auth')->extend('oauth', function ($app) {
+    $provider = new Dingo\Api\Auth\Provider\OAuth2($app['oauth2-server.authorizer']->getChecker());
+
+    $provider->setUserResolver(function ($id) {
+        // Logic to return a user by their ID.
+        return App\Model\Users::find($id);
+    });
+
+    $provider->setClientResolver(function ($id) {
+        // Logic to return a client by their ID.
+    });
+
+    return $provider;
 });
 
 return $app;

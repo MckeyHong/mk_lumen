@@ -29,3 +29,16 @@ $api->version('v1', [], function ($api) {
         ];
     });
 });
+
+
+$app->post('oauth/access_token', function() {
+    return response()->json(app('oauth2-server.authorizer')->issueAccessToken());
+});
+$api = app('Dingo\Api\Routing\Router');
+
+$api->version('v1', ['middleware' => 'api.auth'], function ($api) {
+    $api->get('users/~me', function(){
+        $user = app('Dingo\Api\Auth\Auth')->user();
+        return $user;
+    });
+});

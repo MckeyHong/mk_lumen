@@ -15,16 +15,16 @@ class UsersTableSeeder extends Seeder
     public function run()
     {
         $users = [
-            ['username' => 'admin001', 'name' => 'Ben'],
-            ['username' => 'admin002', 'name' => 'James'],
-            ['username' => 'admin003', 'name' => 'Maggie'],
+            ['email' => 'admin001@mk.com', 'name' => 'Ben'],
+            ['email' => 'admin002@mk.com', 'name' => 'James'],
+            ['email' => 'admin003@mk.com', 'name' => 'Maggie'],
         ];
 
         Users::truncate();
         foreach ($users as $val) {
             Users::create([
-                'username' => $val['username'],
-                'password' => Hash::make( $val['username']),
+                'email'    => $val['email'],
+                'password' => Hash::make('test12345'),
                 'name'     => $val['name'],
             ]);
         }
